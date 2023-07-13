@@ -1,4 +1,4 @@
-version: '3'
+**KUDU_QUICKSTART_IP = ((Get-NetIPAddress | Where-Object { $_.AddressFamily -eq "IPv4" -and $_.InterfaceAlias -ne "Loopback Pseudo-Interface 1" } | Sort-Object -Property InterfaceIndex)[-1]).IPAddress**version: '3'
 services:
   zookeeper:
     image: confluentinc/cp-zookeeper:6.1.1
