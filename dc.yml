@@ -1,0 +1,68 @@
+version: "3.8"
+
+services:
+  # Apache Kudu
+  kudu-master:
+    image: apache/kudu:latest
+    container_name: kudu-master
+    hostname: kudu-master
+    ports:
+      - "7051:7051"
+      - "7050:7050"
+      - "8051:8051"
+      - "8050:8050"
+    volumes:
+      - kudu-master-data:/var/lib/kudu
+    networks:
+      - kudu-kafka-network
+
+  kudu-tserver1:
+    image: apache/kudu:latest
+    container_name: kudu-tserver1
+    hostname: kudu-tserver1
+    ports:
+      - "7050:7050"
+      - "8050:8050"
+    volumes:
+      - kudu-tserver1-data:/var/lib/kudu
+    networks:
+      - kudu-kafka-network
+    depends_on:
+      - kudu-master
+
+  kudu-tserver2:
+    image: apache/kudu:latest
+    container_name: kudu-tserver2
+    hostname: kudu-tserver2
+    ports:
+      - "7050:7050"
+      - "8050:8050"
+    volumes:
+      - kudu-tserver2-data:/var/lib/kudu
+    networks:
+      - kudu-kafka-network
+    depends_on:
+      - kudu-master
+
+  # Apache Kafka
+  kafka:
+    image: wurstmeister/kafka:latest
+    container_name: kafka
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_ADVERTISED_LISTENERS: INSIDE://kafka:9092,OUTSIDE://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INSIDE:PLAINTEXT,OUTSIDE:PLAINTEXT
+      KAFKA_LISTENERS: INSIDE://0.0.0.0:9092,OUTSIDE://0.0.0.0:9092
+      KAFKA_INTER_BROKER_LISTENER_NAME: INSIDE
+      KAFKA_CREATE_TOPICS: "meu-topico:1:1"
+    networks:
+      - kudu-kafka-network
+
+networks:
+  kudu-kafka-network:
+
+volumes:
+  kudu-master-data:
+  kudu-tserver1-data:
+  kudu-tserver2-data:
