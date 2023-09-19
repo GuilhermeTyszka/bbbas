@@ -1,34 +1,55 @@
-import os
-from chardet import detect
-import traceback
-class Encoding():
-    def get_encoding_type(self,file):
-        with open(file, 'rb') as f:
-            rawdata = f.read(67108864)
-        return detect(rawdata)['encoding']
-    def read_in_chunks(self,file_object, chunk_size=67108864):
-        while True:
-            data = file_object.read(chunk_size)
-            if not data:
-                break
-            yield data
-    def encode_file(self, srcfile, chunk_size=67108864):
-        print("Encoding arquivo..")
-        from_codec = self.get_encoding_type(srcfile)
-        trgfile = srcfile+"_utf8"
-        # add try: except block for reliability
-        try:
-            with open(srcfile, 'r', encoding=from_codec) as f, open(trgfile, 'w', encoding='utf-8') as e:
-                for piece in self.read_in_chunks(f,chunk_size):
-                    print("LENDO EM CHUNCKS...")
-                    text = piece
-                    e.write(text)
-            os.remove(srcfile)  # remove old encoding file
-            os.rename(trgfile, srcfile)  # rename new encoding
-            print("ARQUIVO CONVERTIDO COM SUCESSO PARA UTF-8")
-        except UnicodeDecodeError:
-            print('Decode Error')
-        except UnicodeEncodeError:
-            print('Encode Error')
-        except:
-            traceback.print_exc()
+const fs = require('fs');
+const jschardet = require('jschardet');
+const util = require('util');
+const rename = util.promisify(fs.rename);
+
+class Encoding {
+  async getEncodingType(file) {
+    const rawdata = await this.readFileChunk(file, 67108864);
+    const result = jschardet.detect(rawdata);
+    return result.encoding;
+  }
+
+  async readFileChunk(file, chunkSize) {
+    const data = [];
+    const fileStream = fs.createReadStream(file, { highWaterMark: chunkSize });
+
+    for await (const chunk of fileStream) {
+      data.push(chunk);
+    }
+
+    return Buffer.concat(data);
+  }
+
+  async encodeFile(srcfile, chunkSize = 67108864) {
+    console.log("Encoding arquivo..");
+
+    try {
+      const fromCodec = await this.getEncodingType(srcfile);
+      const trgfile = srcfile + "_utf8";
+
+      const srcFileStream = fs.createReadStream(srcfile, { encoding: fromCodec });
+      const trgFileStream = fs.createWriteStream(trgfile, { encoding: 'utf-8' });
+
+      await this.copyFileWithChunks(srcFileStream, trgFileStream, chunkSize);
+
+      await fs.promises.unlink(srcfile); // remove old encoding file
+      await rename(trgfile, srcfile); // rename new encoding
+
+      console.log("ARQUIVO CONVERTIDO COM SUCESSO PARA UTF-8");
+    } catch (error) {
+      console.error('Erro durante a conversão:', error);
+    }
+  }
+
+  async copyFileWithChunks(srcStream, trgStream, chunkSize) {
+    for await (const chunk of srcStream) {
+      trgStream.write(chunk);
+    }
+
+    trgStream.end();
+  }
+}
+
+const encoder = new Encoding();
+encoder.encodeFile('seuarquivo.txt');
