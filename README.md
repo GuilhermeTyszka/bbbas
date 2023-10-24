@@ -1,52 +1,42 @@
 const jdbc = require('jdbc');
-const jinst = require('jdbc/lib/jinst');
-
-if (!jinst.isJvmCreated()) {
-  jinst.addOption('-Xrs');
-  jinst.setupClasspath(['caminho/para/o/driver/jdbc/ImpalaJDBCDriver.jar']); // Substitua pelo caminho para o arquivo JAR do driver do Impala
-}
 
 const config = {
   url: 'jdbc:impala://seuserver:porta/seubanco', // Substitua pelo URL do Impala
   drivername: 'com.cloudera.impala.jdbc41.Driver',
-  minpoolsize: 5,
-  maxpoolsize: 10,
   user: 'seu_usuario', // Substitua pelo nome de usuário
   password: 'sua_senha', // Substitua pela senha
 };
 
-jdbc.initialize(config, (err, res) => {
+jdbc.open(config, (err, conn) => {
   if (err) {
-    console.log(err);
+    console.error(err);
   } else {
     console.log('Conexão com o Impala estabelecida.');
 
-    const conn = jdbc.reserve();
+    const sql = 'SELECT * FROM sua_tabela'; // Substitua pela consulta SQL desejada
 
     conn.createStatement((err, statement) => {
       if (err) {
-        console.log(err);
+        console.error(err);
       } else {
-        const sql = 'SELECT * FROM sua_tabela'; // Substitua pela consulta SQL desejada
-
         statement.executeQuery(sql, (err, resultset) => {
           if (err) {
-            console.log(err);
+            console.error(err);
           } else {
             resultset.toObjArray((err, results) => {
               if (err) {
-                console.log(err);
+                console.error(err);
               } else {
                 console.log('Resultado da consulta:', results);
               }
             });
           }
 
-          jdbc.release(conn, (err) => {
+          conn.close((err) => {
             if (err) {
-              console.log(err);
+              console.error('Erro ao fechar a conexão:', err);
             } else {
-              console.log('Conexão liberada.');
+              console.log('Conexão fechada.');
             }
           });
         });
