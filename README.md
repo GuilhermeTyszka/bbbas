@@ -1,55 +1,56 @@
-const fs = require('fs');
-const jschardet = require('jschardet');
-const util = require('util');
-const rename = util.promisify(fs.rename);
+const jdbc = require('jdbc');
+const jinst = require('jdbc/lib/jinst');
 
-class Encoding {
-  async getEncodingType(file) {
-    const rawdata = await this.readFileChunk(file, 67108864);
-    const result = jschardet.detect(rawdata);
-    return result.encoding;
-  }
-
-  async readFileChunk(file, chunkSize) {
-    const data = [];
-    const fileStream = fs.createReadStream(file, { highWaterMark: chunkSize });
-
-    for await (const chunk of fileStream) {
-      data.push(chunk);
-    }
-
-    return Buffer.concat(data);
-  }
-
-  async encodeFile(srcfile, chunkSize = 67108864) {
-    console.log("Encoding arquivo..");
-
-    try {
-      const fromCodec = await this.getEncodingType(srcfile);
-      const trgfile = srcfile + "_utf8";
-
-      const srcFileStream = fs.createReadStream(srcfile, { encoding: fromCodec });
-      const trgFileStream = fs.createWriteStream(trgfile, { encoding: 'utf-8' });
-
-      await this.copyFileWithChunks(srcFileStream, trgFileStream, chunkSize);
-
-      await fs.promises.unlink(srcfile); // remove old encoding file
-      await rename(trgfile, srcfile); // rename new encoding
-
-      console.log("ARQUIVO CONVERTIDO COM SUCESSO PARA UTF-8");
-    } catch (error) {
-      console.error('Erro durante a conversão:', error);
-    }
-  }
-
-  async copyFileWithChunks(srcStream, trgStream, chunkSize) {
-    for await (const chunk of srcStream) {
-      trgStream.write(chunk);
-    }
-
-    trgStream.end();
-  }
+if (!jinst.isJvmCreated()) {
+  jinst.addOption('-Xrs');
+  jinst.setupClasspath(['caminho/para/o/driver/jdbc/ImpalaJDBCDriver.jar']); // Substitua pelo caminho para o arquivo JAR do driver do Impala
 }
 
-const encoder = new Encoding();
-encoder.encodeFile('seuarquivo.txt');
+const config = {
+  url: 'jdbc:impala://seuserver:porta/seubanco', // Substitua pelo URL do Impala
+  drivername: 'com.cloudera.impala.jdbc41.Driver',
+  minpoolsize: 5,
+  maxpoolsize: 10,
+  user: 'seu_usuario', // Substitua pelo nome de usuário
+  password: 'sua_senha', // Substitua pela senha
+};
+
+jdbc.initialize(config, (err, res) => {
+  if (err) {
+    console.log(err);
+  } else {
+    console.log('Conexão com o Impala estabelecida.');
+
+    const conn = jdbc.reserve();
+
+    conn.createStatement((err, statement) => {
+      if (err) {
+        console.log(err);
+      } else {
+        const sql = 'SELECT * FROM sua_tabela'; // Substitua pela consulta SQL desejada
+
+        statement.executeQuery(sql, (err, resultset) => {
+          if (err) {
+            console.log(err);
+          } else {
+            resultset.toObjArray((err, results) => {
+              if (err) {
+                console.log(err);
+              } else {
+                console.log('Resultado da consulta:', results);
+              }
+            });
+          }
+
+          jdbc.release(conn, (err) => {
+            if (err) {
+              console.log(err);
+            } else {
+              console.log('Conexão liberada.');
+            }
+          });
+        });
+      }
+    });
+  }
+});
