@@ -1,46 +1,38 @@
-const jdbc = require('jdbc');
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 
-const config = {
-  url: 'jdbc:impala://seuserver:porta/seubanco', // Substitua pelo URL do Impala
-  drivername: 'com.cloudera.impala.jdbc41.Driver',
-  user: 'seu_usuario', // Substitua pelo nome de usuário
-  password: 'sua_senha', // Substitua pela senha
-};
+# Configurações do servidor SMTP do Gmail
+smtp_server = 'smtp.office365.com'
+smtp_port = 587
+smtp_username = 'guilhermetyszka@hotmail.com'
+smtp_password = 'Tyszka0819'
 
-jdbc.open(config, (err, conn) => {
-  if (err) {
-    console.error(err);
-  } else {
-    console.log('Conexão com o Impala estabelecida.');
+# Destinatário e remetente
+destinatario = 'guilhermetyszka@hotmail.com'
+remetente = 'guilhermetyszka@hotmail.com'
 
-    const sql = 'SELECT * FROM sua_tabela'; // Substitua pela consulta SQL desejada
+# Crie uma mensagem de e-mail
+mensagem = MIMEMultipart()
+mensagem['From'] = remetente
+mensagem['To'] = destinatario
+mensagem['Subject'] = 'Assunto do e-mail'
 
-    conn.createStatement((err, statement) => {
-      if (err) {
-        console.error(err);
-      } else {
-        statement.executeQuery(sql, (err, resultset) => {
-          if (err) {
-            console.error(err);
-          } else {
-            resultset.toObjArray((err, results) => {
-              if (err) {
-                console.error(err);
-              } else {
-                console.log('Resultado da consulta:', results);
-              }
-            });
-          }
+# Corpo do e-mail
+corpo = 'Este é o corpo do e-mail.'
+mensagem.attach(MIMEText(corpo, 'plain'))
 
-          conn.close((err) => {
-            if (err) {
-              console.error('Erro ao fechar a conexão:', err);
-            } else {
-              console.log('Conexão fechada.');
-            }
-          });
-        });
-      }
-    });
-  }
-});
+# Conecte-se ao servidor SMTP
+try:
+    server = smtplib.SMTP(smtp_server, smtp_port)
+    server.starttls()
+    server.login(smtp_username, smtp_password)
+
+    # Envie o e-mail
+    texto_email = mensagem.as_string()
+    server.sendmail(remetente, destinatario, texto_email)
+    server.quit()
+    print('E-mail enviado com sucesso!')
+
+except Exception as e:
+    print('Erro ao enviar o e-mail:', str(e))
