@@ -1,23 +1,26 @@
-import requests
-import json
+const fs = require('fs');
+const Papa = require('papaparse');
 
-# Your incoming webhook URL
-webhook_url = 'YOUR_WEBHOOK_URL'
+const arquivo = 'seuarquivo.csv';
 
-# Define the message payload
-message = {
-    'text': 'Hello from Python!',
-    'title': 'Python Bot'
-}
+fs.readFile(arquivo, 'utf8', (err, data) => {
+  if (err) {
+    console.error(err);
+    return;
+  }
 
-# Send the message to Microsoft Teams
-response = requests.post(
-    webhook_url,
-    data=json.dumps(message),
-    headers={'Content-Type': 'application/json'}
-)
-
-if response.status_code == 200:
-    print('Message sent successfully!')
-else:
-    print('Failed to send message:', response.status_code)
+  Papa.parse(data, {
+    header: true,
+    delimiter: ',',
+    complete: function(results) {
+      const header = results.meta.fields;
+      console.log('Cabeçalhos:', header);
+      
+      results.data.forEach(row => {
+        console.log('ID:', row.id);
+        console.log('Name:', row[' "name"']);
+        console.log('Databases:', row[' "databases"']);
+      });
+    }
+  });
+});
