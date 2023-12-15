@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Planilha</title>
+  <style>
+    table {
+      border-collapse: collapse;
+      width: 100%;
+    }
+
+    th, td {
+      border: 1px solid #dddddd;
+      text-align: left;
+      padding: 8px;
+    }
+
+    th {
+      background-color: #f2f2f2;
+    }
+  </style>
+</head>
+<body>
+
+<script>
+  // Função para descriptografar valores de Base64
+  function descriptografarBase64(valorBase64) {
+    // Lógica de descriptografia aqui (ajuste conforme necessário)
+    // Este exemplo usa a função atob() que decodifica uma string Base64 em ASCII
+    return atob(valorBase64);
+  }
+
+  // Dados da lista
+  var lista = [
+    "bXNhbGtz",
+    "bXNhbGtz",
+    "bXNhbGtz",
+    "bXNhbGtz",
+    "bXNhbGtz"
+  ];
+
+  // Criar tabela
+  var tabelaHTML = '<table>';
+  tabelaHTML += '<thead><tr><th>Cabeçalho</th></tr></thead>';
+  tabelaHTML += '<tbody>';
+  
+  for (var i = 0; i < lista.length; i++) {
+    var valorDescriptografado = descriptografarBase64(lista[i]);
+    tabelaHTML += '<tr><td>' + valorDescriptografado + '</td></tr>';
+  }
+
+  tabelaHTML += '</tbody></table>';
+
+  // Inserir tabela no corpo do documento
+  document.body.innerHTML = tabelaHTML;
+</script>
+
+</body>
+</html>
