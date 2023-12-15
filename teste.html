@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Planilha</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/handlebars.js/4.7.7/handlebars.min.js"></script>
   <style>
     table {
       border-collapse: collapse;
@@ -23,6 +24,23 @@
 </head>
 <body>
 
+<script id="template" type="text/x-handlebars-template">
+  <table>
+    <thead>
+      <tr>
+        <th>Cabeçalho</th>
+      </tr>
+    </thead>
+    <tbody>
+      {{#each lista}}
+        <tr>
+          <td>{{descriptografarBase64 this}}</td>
+        </tr>
+      {{/each}}
+    </tbody>
+  </table>
+</script>
+
 <script>
   // Função para descriptografar valores de Base64
   function descriptografarBase64(valorBase64) {
@@ -32,25 +50,15 @@
   }
 
   // Dados da lista
-  var lista = [
-    "bXNhbGtz",
-    "bXNhbGtz",
-    "bXNhbGtz",
-    "bXNhbGtz",
-    "bXNhbGtz"
-  ];
+  var data = {
+    lista: ["bXNhbGtz", "bXNhbGtz", "bXNhbGtz", "bXNhbGtz", "bXNhbGtz"]
+  };
 
-  // Criar tabela
-  var tabelaHTML = '<table>';
-  tabelaHTML += '<thead><tr><th>Cabeçalho</th></tr></thead>';
-  tabelaHTML += '<tbody>';
-  
-  for (var i = 0; i < lista.length; i++) {
-    var valorDescriptografado = descriptografarBase64(lista[i]);
-    tabelaHTML += '<tr><td>' + valorDescriptografado + '</td></tr>';
-  }
+  // Compilar o template Handlebars
+  var template = Handlebars.compile(document.getElementById("template").innerHTML);
 
-  tabelaHTML += '</tbody></table>';
+  // Renderizar o template com os dados
+  var tabelaHTML = template(data);
 
   // Inserir tabela no corpo do documento
   document.body.innerHTML = tabelaHTML;
