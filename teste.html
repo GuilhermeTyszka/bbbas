@@ -1,68 +1,108 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-br">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Planilha</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/handlebars.js/4.7.7/handlebars.min.js"></script>
-  <style>
-    table {
-      border-collapse: collapse;
-      width: 100%;
-    }
-
-    th, td {
-      border: 1px solid #dddddd;
-      text-align: left;
-      padding: 8px;
-    }
-
-    th {
-      background-color: #f2f2f2;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=1280, height=720">
+    <title>Relatório de Outliers | Maio/2024</title>
+    <style>
+        body {
+    font-family: Arial, sans-serif;
+    background-color: #ffffff; /* fundo branco */
+    color: #002147; /* cor do texto azul escuro */
+    margin: 0; /* remove margens padrão */
+    padding: 20px; /* padding interno */
+    box-sizing: border-box; /* inclui padding na largura e altura */
+}
+h1 {
+    font-size: 36px; /* tamanho do título grande */
+    font-weight: bold; /* texto em negrito */
+    color: #002147; /* cor azul escuro */
+}
+.rectangle {
+    background-color: #002147; /* cor de fundo azul escuro */
+    color: #ffffff; /* cor do texto branco */
+    border-radius: 10px; /* cantos arredondados */
+    padding: 10px; /* preenchimento interno */
+    margin-bottom: 20px; /* margem inferior */
+}
+.inner-rectangle {
+    background-color: #002147; /* cor de fundo azul escuro */
+    color: #ffffff; /* cor do texto branco */
+    border-radius: 10px; /* cantos arredondados */
+    padding: 10px; /* preenchimento interno */
+    margin-bottom: 20px; /* margem inferior */
+}
+.orange-rectangle {
+    border: 2px solid #ff8c00; /* contorno laranja escuro */
+    background-color: #ffffff; /* fundo branco */
+    padding: 20px; /* preenchimento interno */
+}
+.orange-box {
+    background-color: #ff8c00; /* cor de fundo laranja */
+    color: #ffffff; /* cor do texto branco */
+    border-radius: 10px; /* cantos arredondados */
+    padding: 5px; /* preenchimento interno */
+    margin: 10px; /* margem */
+}
+.subtitle {
+    font-size: 24px; /* tamanho do subtítulo */
+    font-weight: bold; /* texto em negrito */
+    color: #ff8c00; /* cor laranja */
+    margin-bottom: 10px; /* margem inferior */
+}
+    </style>
 </head>
 <body>
+    <h1>Reporte Outliers | Maio/2024</h1>
 
-<script id="template" type="text/x-handlebars-template">
-  <table>
-    <thead>
-      <tr>
-        <th>Cabeçalho</th>
-      </tr>
-    </thead>
-    <tbody>
-      {{#each lista}}
-        <tr>
-          <td>{{descriptografarBase64 this}}</td>
-        </tr>
-      {{/each}}
-    </tbody>
-  </table>
-</script>
+    <div class="rectangle">
+        <p><strong>PASTA: </strong>{{n_pasta}}</p>
+    </div>
 
-<script>
-  // Função para descriptografar valores de Base64
-  function descriptografarBase64(valorBase64) {
-    // Lógica de descriptografia aqui (ajuste conforme necessário)
-    // Este exemplo usa a função atob() que decodifica uma string Base64 em ASCII
-    return atob(valorBase64);
-  }
+    <div class="rectangle">
+        <p>
+            <strong>UF: </strong>{{uf}}
+            <strong>Cargo: </strong>{{cargo}}
+            <strong>Carteira: </strong>{{carteira}}
+            <strong>Origem: </strong>{{origem}}
+            <strong>Adv Adverso: </strong>{{adv_adverso}}
+        </p>
+    </div>
 
-  // Dados da lista
-  var data = {
-    lista: ["bXNhbGtz", "bXNhbGtz", "bXNhbGtz", "bXNhbGtz", "bXNhbGtz"]
-  };
-
-  // Compilar o template Handlebars
-  var template = Handlebars.compile(document.getElementById("template").innerHTML);
-
-  // Renderizar o template com os dados
-  var tabelaHTML = template(data);
-
-  // Inserir tabela no corpo do documento
-  document.body.innerHTML = tabelaHTML;
-</script>
-
+    <div class="orange-rectangle">
+        <div>
+            <p><strong>ESTRATÉGIA: </strong>{{estrategia}}</p>
+            <p><strong>LIBERAÇÃO: </strong>{{liberacao}}</p>
+            <p><strong>Bloqueios: </strong>{{detalhe_bloqueio}}</p>
+            <p><strong>Info Adicional: </strong>{{detalhe_informacao}}</p>
+            <p><strong>Nível de Serviço Advops: </strong>{{nivel_servico}}</p>
+        </div>
+        <div>
+            <p class="subtitle">Valores Pasta (Bruto)</p>
+            <div class="orange-box">
+                <p>Risco 2501</p>
+                <p>R$ <span>{{risco_2501}}</span></p>
+            </div>
+            <div class="orange-box">
+                <p>Risco Preço</p>
+                <p>R$ <span>{{risco_preco}}</span></p>
+            </div>
+            <div class="orange-box">
+                <p>Risco 2519</p>
+                <p>R$ <span>{{risco_2519}}</span></p>
+            </div>
+        </div>
+        <div>
+            <p class="subtitle">Negociação (liquido)</p>
+            <div class="orange-box">
+                <p>Valor Ofertado</p>
+                <p>R$ <span>{{vl_ofertado}}</span></p>
+            </div>
+            <div class="orange-box">
+                <p>Contraproposta</p>
+                <p>R$ <span>{{vl_contraproposta}}</span></p>
+            </div>
+        </div>
+    </div>
 </body>
 </html>
