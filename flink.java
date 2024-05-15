@@ -1,56 +1,58 @@
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.X509TrustManager;
-import java.security.cert.X509Certificate;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.conn.ssl.NoopHostnameVerifier;
+import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.ssl.SSLContextBuilder;
 
-public class HttpClientDisableSSLVerificationExample {
+import javax.net.ssl.SSLContext;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+
+public class ApacheHttpClientDisableSSLVerificationExample {
 
     public static void main(String[] args) throws Exception {
-        // Cria um HttpClient customizado com verificação SSL desabilitada
-        HttpClient httpClient = createCustomHttpClientWithSSLDisabled();
+        // Cria um CloseableHttpClient com verificação SSL desabilitada
+        CloseableHttpClient httpClient = createCustomHttpClientWithSSLDisabled();
 
         // URL da requisição HTTPS que será feita
         String url = "https://exemplo.com/api";
 
-        // Cria uma requisição HTTP GET para a URL especificada
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(new URI(url))
-                .GET()
-                .build();
+        // Cria um objeto HttpGet para a URL especificada
+        HttpGet httpGet = new HttpGet(url);
 
-        // Envia a requisição e recebe a resposta
-        HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+        // Executa a requisição e recebe a resposta
+        HttpResponse response = httpClient.execute(httpGet);
 
-        // Imprime a resposta da requisição
-        System.out.println("Status da resposta: " + response.statusCode());
-        System.out.println("Corpo da resposta: " + response.body());
+        // Lê e imprime o conteúdo da resposta
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(response.getEntity().getContent()))) {
+            String line;
+            StringBuilder responseBody = new StringBuilder();
+            while ((line = reader.readLine()) != null) {
+                responseBody.append(line);
+            }
+            System.out.println("Status da resposta: " + response.getStatusLine().getStatusCode());
+            System.out.println("Corpo da resposta: " + responseBody.toString());
+        } finally {
+            // Fecha o HttpClient após a conclusão da requisição
+            httpClient.close();
+        }
     }
 
-    private static HttpClient createCustomHttpClientWithSSLDisabled() throws Exception {
-        // Cria um TrustManager que não verifica certificados SSL
-        TrustManager[] trustAllCerts = new TrustManager[] {
-            new X509TrustManager() {
-                public X509Certificate[] getAcceptedIssuers() {
-                    return null;
-                }
-                public void checkClientTrusted(X509Certificate[] certs, String authType) {
-                }
-                public void checkServerTrusted(X509Certificate[] certs, String authType) {
-                }
-            }
-        };
+    private static CloseableHttpClient createCustomHttpClientWithSSLDisabled() throws Exception {
+        // Cria um SSLContext que utiliza o TrustManager personalizado para aceitar todos os certificados SSL
+        SSLContext sslContext = SSLContextBuilder.create()
+                .loadTrustMaterial((chain, authType) -> true) // Aceita todos os certificados
+                .build();
 
-        // Cria um SSLContext que utiliza o TrustManager personalizado
-        SSLContext sslContext = SSLContext.getInstance("TLS");
-        sslContext.init(null, trustAllCerts, new java.security.SecureRandom());
+        // Cria um SSLConnectionSocketFactory com verificação SSL desabilitada
+        SSLConnectionSocketFactory socketFactory = new SSLConnectionSocketFactory(sslContext, NoopHostnameVerifier.INSTANCE);
 
-        // Cria um HttpClient com verificação SSL desabilitada usando o SSLContext customizado
-        HttpClient httpClient = HttpClient.newBuilder()
-                .sslContext(sslContext)
+        // Cria um CloseableHttpClient com o SSLConnectionSocketFactory personalizado
+        CloseableHttpClient httpClient = HttpClients.custom()
+                .setSSLSocketFactory(socketFactory)
                 .build();
 
         return httpClient;
