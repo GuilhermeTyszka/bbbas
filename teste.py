@@ -1,30 +1,57 @@
-from jinja2 import Environment, FileSystemLoader
-from xhtml2pdf import pisa
+import msal
+import requests
 
-# Função para converter HTML em PDF
-def convert_html_to_pdf(html_content, output_filename):
-    with open(output_filename, "w+b") as output_file:
-        pisa_status = pisa.CreatePDF(html_content, dest=output_file)
-        
-# Carregar o template HTML
-env = Environment(loader=FileSystemLoader('.'))
-template = env.get_template('example.html')
+client_id = 'SEU_CLIENT_ID'
+client_secret = 'SEU_CLIENT_SECRET'
+tenant_id = 'common'
+authority = f"https://login.microsoftonline.com/{tenant_id}"
+scope = ['Files.ReadWrite.All', 'Sites.ReadWrite.All']
+redirect_uri = 'https://localhost'
 
-# Definir os dados que serão inseridos no template
-data = {'estrategia': 'ACORDO', 'id': '12345'}
+# Crie uma instância do aplicativo MSAL
+app = msal.ConfidentialClientApplication(
+    client_id, authority=authority, client_credential=client_secret
+)
 
-# Renderizar o template com os dados
-html_out = template.render(data)
+# Primeira autenticação interativa para obter o token
+result = app.acquire_token_interactive(scopes=scope)
 
-# Salvar o HTML renderizado em um arquivo temporário
-with open('example_out.html', 'w') as f:
-    f.write(html_out)
+# Armazene o token de atualização e o token de acesso
+if 'access_token' in result:
+    access_token = result['access_token']
+    refresh_token = result['refresh_token']  # Guarde o refresh token
+    print(f"Access Token: {access_token}")
+    print(f"Refresh Token: {refresh_token}")
+else:
+    print(f"Erro na autenticação: {result.get('error_description')}")
 
-# Converter HTML para PDF
-convert_html_to_pdf(html_out, 'output.pdf')
+# Função para obter um novo token de acesso usando o refresh token
+def get_new_access_token(refresh_token):
+    result = app.acquire_token_by_refresh_token(refresh_token, scopes=scope)
+    if 'access_token' in result:
+        return result['access_token']
+    else:
+        print(f"Erro ao renovar o token: {result.get('error_description')}")
+        return None
 
-# Remover o arquivo HTML temporário
-import os
-#os.remove('output.html')
+# Tente renovar o token de acesso
+new_access_token = get_new_access_token(refresh_token)
 
-print("PDF criado com sucesso!")
+if new_access_token:
+    # Fazer o upload do arquivo para o OneDrive
+    upload_url = "https://graph.microsoft.com/v1.0/me/drive/root:/meu_arquivo.txt:/content"
+    headers = {
+        'Authorization': f'Bearer {new_access_token}',
+        'Content-Type': 'text/plain',
+    }
+
+    file_content = 'Conteúdo do arquivo a ser enviado.'
+
+    response = requests.put(upload_url, headers=headers, data=file_content)
+
+    if response.status_code == 201:
+        print('Arquivo enviado com sucesso!')
+    else:
+        print(f"Erro ao enviar arquivo: {response.status_code} - {response.text}")
+else:
+    print('Não foi possível obter um novo token de acesso.')
